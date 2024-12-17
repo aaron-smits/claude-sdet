@@ -93,12 +93,7 @@ const tools: Anthropic.Tool[] =
   },
 ]
 
-let messages: Anthropic.Messages.MessageParam[] =  [
-       {
-         role: 'user',
-         content: `What is the weather in SF?`,
-       },
-]
+let messages: Anthropic.Messages.MessageParam[] = []
 
 async function chat() {
   messages.push({
@@ -137,7 +132,6 @@ async function chat() {
         model: 'claude-3-5-sonnet-latest',
         tools: tools
       });
-      console.log(toolresp)
     }
   }
 }
