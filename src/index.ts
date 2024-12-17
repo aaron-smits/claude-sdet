@@ -105,67 +105,40 @@ async function chat() {
       role: 'user',
       content: `Go to pomofocus.io with playwright`,
   })
-  const stream = client.messages.stream({
+  const resp = await client.messages.create({
     max_tokens: 1024,
     messages: messages,
     model: 'claude-3-5-sonnet-latest',
     tools: tools,
   });
-
-  stream.on('connect', () => {
-    console.log('Connected to Anthropic API');
-  });
-
-  // stream.on('streamEvent', (event, snapshot) => {
-  //   console.log('Stream event:', event);
-  //   console.log('Message snapshot:', snapshot);
-  // });
-
-  // stream.on('text', (textDelta, textSnapshot) => {
-  //   console.log('Text delta:', textDelta);
-  //   console.log('Text snapshot:', textSnapshot);
-  // });
-
-  stream.on('message', (message) => {
-    console.log('Message completed:', message);
-  });
-
-  stream.on('contentBlock', async (content) => {
-    console.log('Content block completed:', content);
-    if (content.type == 'tool_use') {
-      const result = await handleToolCall(content.name, content.input)
-      messages.push({"role": "assistant", "content": result.content})
-      messages.push({
+  if (resp.stop_reason == "tool_use") {
+    console.log(resp)
+    const toolUse = resp.content.find(c => c.type === 'tool_use');
+    if (toolUse) {
+      const toolName = toolUse!.name;
+      const toolInput = toolUse!.input;
+      const result = await handleToolCall(toolName, toolInput)
+      messages.push(
+          {"role": "assistant", "content": resp.content},
+          {
               "role": "user",
               "content": [
                   {
                       "type": "tool_result",
-                      "tool_use_id": content.id,
-                      "content": result,
+                      "tool_use_id": toolUse.id,
+                      "content": JSON.stringify(result)
                   }
               ],
-        }
+          },
       )
+      const toolresp = await client.messages.create({
+        max_tokens: 1024,
+        messages: messages,
+        model: 'claude-3-5-sonnet-latest',
+        tools: tools
+      });
+      console.log(toolresp)
     }
-  });
-
-  stream.on('finalMessage', (message) => {
-    console.log('Final message:', message);
-  });
-
-  stream.on('error', (error) => {
-    console.error('Stream error:', error);
-  });
-
-  stream.on('abort', (error) => {
-    console.error('Stream aborted:', error);
-  });
-
-  stream.on('end', () => {
-    console.log('Stream ended');
-  });
-
-  await stream.done();
-
+  }
 }
 chat()
