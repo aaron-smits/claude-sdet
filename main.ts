@@ -58,12 +58,12 @@ const tools: Anthropic.Tool[] =
     },
   },
   {
-    name: "playwright_find_locators",
-    description: "Get a list of interactive locators on the current page",
+    name: "playwright_find_selectors_by_text",
+    description: "Get a list of interactive selectors on the current page",
     input_schema: {
       type: "object",
       properties: {
-          details: { type: "string", description: "Any specific details about what locators to return" },
+          text: { type: "string", description: "text to find, will pass to the playwright .filter({hasText: ''}) method" },
       },
     }
   },
@@ -124,8 +124,7 @@ app.post('/chat/:sessionId', async (c) => {
   });
 
   try {
-    console.log('Sending request to Claude...');
-    const resp = await client.messages.create({
+    let currentResponse = await client.messages.create({
       max_tokens: 1024,
       messages: messages,
       model: 'claude-3-5-sonnet-latest',
@@ -133,45 +132,41 @@ app.post('/chat/:sessionId', async (c) => {
     });
     console.log('Received response from Claude');
 
-    if (resp.stop_reason === "tool_use") {
+    messages.push({ "role": "assistant", "content": currentResponse.content });
+
+    while (currentResponse.stop_reason === "tool_use") {
       console.log('Tool use detected');
-      const toolUse = resp.content.find(c => c.type === 'tool_use');
-      if (toolUse) {
-        const toolName = toolUse.name;
-        const toolInput = toolUse.input;
-        console.log(`Executing tool: ${toolName}`);
-        const result = await handleToolCall(toolName, toolInput);
-        console.log('Tool execution complete');
+      const toolUse = currentResponse.content.find(c => c.type === 'tool_use');
+      if (!toolUse) break;
 
-        messages.push(
-          { "role": "assistant", "content": resp.content },
+      const toolName = toolUse.name;
+      const toolInput = toolUse.input;
+      console.log(`Executing tool: ${toolName}`);
+      const result = await handleToolCall(toolName, toolInput);
+      console.log('Tool execution complete');
+
+      messages.push({
+        "role": "user",
+        "content": [
           {
-            "role": "user",
-            "content": [
-              {
-                "type": "tool_result",
-                "tool_use_id": toolUse.id,
-                "content": JSON.stringify(result)
-              }
-            ],
-          },
-        );
+            "type": "tool_result",
+            "tool_use_id": toolUse.id,
+            "content": JSON.stringify(result)
+          }
+        ],
+      });
 
-        console.log('Sending follow-up request to Claude...');
-        const toolresp = await client.messages.create({
-          max_tokens: 1024,
-          messages: messages,
-          model: 'claude-3-5-sonnet-latest',
-          tools: tools
-        });
-        console.log('Received follow-up response');
-        messages.push( { "role": "assistant", "content": toolresp.content })
-        return c.json({
-          messages: messages
-        });
-      }
+      console.log('Sending follow-up request to Claude...');
+      currentResponse = await client.messages.create({
+        max_tokens: 1024,
+        messages: messages,
+        model: 'claude-3-5-sonnet-latest',
+        tools: tools
+      });
+      console.log('Received follow-up response');
+
+      messages.push({ "role": "assistant", "content": currentResponse.content });
     }
-    messages.push( { "role": "assistant", "content": resp.content })
 
     return c.json({
       messages: messages

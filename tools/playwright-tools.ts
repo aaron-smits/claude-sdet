@@ -7,40 +7,7 @@ const consoleLogs: string[] = [];
 const screenshots = new Map<string, string>();
 
 
-async function findInteractiveElements(page: Page): Promise<string[]> {
-  const locators: Locator[][] = await Promise.all([
-    page.getByRole("button").all(),
-    page.getByRole("textbox").all(),
-    page.getByRole("combobox").all(),
-    page.getByRole("link").all(),
-    page.getByRole("checkbox").all(),
-    page.getByRole("radio").all(),
-    page.getByRole("tab").all(),
-    page.getByRole("tabpanel").all(),
-    page.getByRole("menu").all(),
-    page.getByRole("menuitem").all(),
-    page.getByRole("listbox").all(),
-    page.getByRole("option").all(),
-    page.getByRole("dialog").all(),
-    page.getByRole("alert").all(),
-    page.getByRole("tooltip").all(),
-    page.getByRole("slider").all(),
-    page.getByRole("spinbutton").all(),
-    page.getByRole("searchbox").all(),
-    page.getByRole("progressbar").all(),
-    page.getByRole("switch").all()
-  ]);
 
-const allLocatorStrings: string[] = [];
-
-  for (const locatorArray of locators) {
-    for (const locator of locatorArray) {
-      allLocatorStrings.push(locator.toString());
-    }
-  }
-  console.log(allLocatorStrings)
-  return allLocatorStrings;
-}
 async function ensureBrowser() {
   if (!browser) {
     browser =  await chromium.launch({
@@ -68,12 +35,6 @@ async function ensureBrowser() {
   }
   return page!;
 }
-
-// async function cleanupBrowser() {
-//   if (browser) {
-//     await browser.close()
-//   }
-// }
 
 declare global {
   interface Window {
@@ -149,14 +110,14 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
       };
     }
 
-    case "playwright_find_locators": {
+    case "playwright_find_selectors_by_text": {
       try {
-        const matches = await findInteractiveElements(page)
-        console.log(matches)
+        const locators = await page.locator("*").filter({hasText: args.text}).all()
+        console.log(locators)
         return {
           content: [{
             type: "text",
-            text: JSON.stringify(matches)
+            text: JSON.stringify(locators)
           }],
           isError: false
         }
