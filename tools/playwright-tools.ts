@@ -6,9 +6,6 @@ let page: Page | undefined;
 const consoleLogs: string[] = [];
 const screenshots = new Map<string, string>();
 
-async function getLocatorText(locator: Locator): Promise<string>{
-    return locator.toString()
-}
 
 async function findInteractiveElements(page: Page): Promise<string[]> {
   const locators: Locator[][] = await Promise.all([
@@ -38,7 +35,7 @@ const allLocatorStrings: string[] = [];
 
   for (const locatorArray of locators) {
     for (const locator of locatorArray) {
-      allLocatorStrings.push(await getLocatorText(locator));
+      allLocatorStrings.push(locator.toString());
     }
   }
   console.log(allLocatorStrings)
@@ -48,19 +45,19 @@ async function ensureBrowser() {
   if (!browser) {
     browser =  await chromium.launch({
         headless: false,
-        args: [
-          '--disable-blink-features=AutomationControlled',
-          '--enable-webgl',
-          '--use-gl=swiftshader',
-          '--enable-accelerated-2d-canvas'
-        ]
+        // args: [
+        //   '--disable-blink-features=AutomationControlled',
+        //   '--enable-webgl',
+        //   '--use-gl=swiftshader',
+        //   '--enable-accelerated-2d-canvas'
+        // ]
     });
     const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        viewport: { width: 1280, height: 720 },
-        locale: 'en-US',
-        timezoneId: 'America/New_York',
-        deviceScaleFactor: 1,
+        // userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        // viewport: { width: 1280, height: 720 },
+        // locale: 'en-US',
+        // timezoneId: 'America/New_York',
+        // deviceScaleFactor: 1,
     });
     page = await context.newPage()
 
@@ -103,18 +100,18 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
     case "playwright_navigate": {
       console.error(`Running navigate to await page.goto(${args.url})`)
       await page.goto(args.url);
-      const screenshot = await takeScreenshot(page, `navigate_${Date.now()}`);
+      // const screenshot = await takeScreenshot(page, `navigate_${Date.now()}`);
       return {
         content: [
           {
             type: "text",
             text: `Navigated to ${args.url}`,
           },
-          {
-            type: "image",
-            data: screenshot,
-            mimeType: "image/png",
-          }
+          // {
+          //   type: "image",
+          //   data: screenshot,
+          //   mimeType: "image/png",
+          // }
         ],
         isError: false,
       };
@@ -142,11 +139,11 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
             type: "text",
             text: `${args.fullpage ? "Full Page": undefined }Screenshot '${args.name}' taken at`,
           },
-          {
-            type: "image",
-            data: screenshot,
-            mimeType: "image/png",
-          }
+          // {
+          //   type: "image",
+          //   data: screenshot,
+          //   mimeType: "image/png",
+          // }
         ],
         isError: false,
       };
@@ -179,18 +176,18 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
         console.error(args)
         await page.locator(args.locator).click()
         await page.waitForTimeout(2000)
-        const screenshot = await takeScreenshot(page, `click_${Date.now()}`);
+        // const screenshot = await takeScreenshot(page, `click_${Date.now()}`);
         return {
           content: [
             {
               type: "text",
               text: `Clicked ${args.locator}`,
             },
-            {
-              type: "image",
-              data: screenshot,
-              mimeType: "image/png",
-            }
+            // {
+            //   type: "image",
+            //   data: screenshot,
+            //   mimeType: "image/png",
+            // }
           ],
           isError: false,
         };
@@ -208,17 +205,18 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
       try {
         await page.locator(args.locator).fill(args.value);
         await page.waitForTimeout(2000)
-        const screenshot = await takeScreenshot(page, `click_${Date.now()}`);        return {
+        // const screenshot = await takeScreenshot(page, `click_${Date.now()}`);
+        return {
           content: [
             {
               type: "text",
               text: `Filled ${args.locator} with: ${args.value}`,
             },
-            {
-              type: "image",
-              data: screenshot,
-              mimeType: "image/png",
-            }
+            // {
+            //   type: "image",
+            //   data: screenshot,
+            //   mimeType: "image/png",
+            // }
           ],
           isError: false,
         };
@@ -236,18 +234,18 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
     case "playwright_highlight": {
       try {
         await (args.locator).highlight();
-        const screenshot = await takeScreenshot(page, `hover_${Date.now()}`);
+        // const screenshot = await takeScreenshot(page, `hover_${Date.now()}`);
         return {
           content: [
             {
               type: "text",
               text: `Hovered ${args.locator}`,
             },
-            {
-              type: "image",
-              data: screenshot,
-              mimeType: "image/png",
-            }
+            // {
+            //   type: "image",
+            //   // data: screenshot,
+            //   mimeType: "image/png",
+            // }
           ],
           isError: false,
         };

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Chat Client</title>
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        #chat-container {
+            height: 60vh;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: 20%;
+        }
+        .assistant-message {
+            background-color: #f5f5f5;
+            margin-right: 20%;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .system-message {
+            background-color: #fff3e0;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Claude Chat</h1>
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="clearChat()">Clear Chat</button>
+    </div>
+
+    <script>
+        const sessionId = 'session-' + Math.random().toString(36).substring(7);
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+
+            if (!message) return;
+
+            // Display user message
+            appendMessage('user', message);
+            messageInput.value = '';
+
+            try {
+                const response = await fetch(`/chat/${sessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message }),
+                });
+
+                const data = await response.json();
+
+                // Handle messages from the response
+                if (data.messages) {
+                    // Clear existing messages and reload all messages
+                    document.getElementById('chat-container').innerHTML = '';
+                    data.messages.forEach(msg => {
+                        if (typeof msg.content === 'string') {
+                            appendMessage(msg.role, msg.content);
+                        } else if (Array.isArray(msg.content)) {
+                            msg.content.forEach(content => {
+                                if (content.type === 'text') {
+                                    appendMessage(msg.role, content.text);
+                                } else if (content.type === 'tool_result') {
+                                    try {
+                                        const toolResult = JSON.parse(content.content);
+                                        if (toolResult.content) {
+                                            toolResult.content.forEach(item => {
+                                                if (item.type === 'text') {
+                                                    appendMessage('system', item.text);
+                                                } else if (item.type === 'image') {
+                                                    appendImage(item.data);
+                                                }
+                                            });
+                                        }
+                                    } catch (e) {
+                                        console.error('Error parsing tool result:', e);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('assistant', 'Error: Failed to get response');
+            }
+        }
+
+        function appendMessage(role, content) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}-message`;
+            messageDiv.textContent = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function appendImage(base64Data) {
+            const chatContainer = document.getElementById('chat-container');
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'message system-message';
+            const img = document.createElement('img');
+            img.src = `data:image/png;base64,${base64Data}`;
+            img.style.maxWidth = '100%';
+            imageDiv.appendChild(img);
+            chatContainer.appendChild(imageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function clearChat() {
+            try {
+                await fetch(`/chat/${sessionId}`, {
+                    method: 'DELETE',
+                });
+                document.getElementById('chat-container').innerHTML = '';
+            } catch (error) {
+                console.error('Error clearing chat:', error);
+            }
+        }
+
+        // Handle Enter key
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Load existing messages on page load
+        async function loadMessages() {
+            try {
+                const response = await fetch(`/chat/${sessionId}`);
+                const data = await response.json();
+                if (data.messages) {
+                    data.messages.forEach(msg => {
+                        if (typeof msg.content === 'string') {
+                            appendMessage(msg.role, msg.content);
+                        } else if (Array.isArray(msg.content)) {
+                            msg.content.forEach(content => {
+                                if (content.type === 'text') {
+                                    appendMessage(msg.role, content.text);
+                                }
+                            });
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        loadMessages();
+    </script>
+</body>
+</html>
