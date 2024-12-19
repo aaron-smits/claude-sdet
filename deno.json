@@ -3,26 +3,11 @@
     "dev": "deno run --watch main.ts"
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@1"
+    "@std/assert": "jsr:@std/assert@1",
+    "hono": "npm:hono@^4.6.14"
   },
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
-    "allowImportingTsExtensions": true,
-    "allowJs": true,
-    "outDir": "./build",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "paths": {
-         "@/*": ["./src/*"]
-    },
-    "baseUrl": "."
+    "strict": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

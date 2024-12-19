@@ -1,4 +1,4 @@
-import { chromium, Browser, Page, Locator } from "rebrowser-playwright-core";
+import { chromium, Browser, Page, Locator } from "npm:rebrowser-playwright-core";
 
 // Global state
 let browser: Browser | undefined;

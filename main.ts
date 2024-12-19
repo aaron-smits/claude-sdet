@@ -1,8 +1,8 @@
-import { Hono } from 'hono';
+import { Hono } from 'npm:hono';
 import Anthropic from 'npm:@anthropic-ai/sdk';
 import { handleToolCall } from "./tools/playwright-tools.ts";
-import { serveStatic } from 'hono/deno'
-import { logger } from 'hono/logger'
+import { serveStatic } from 'npm:hono/deno'
+import { logger } from 'npm:hono/logger'
 
 const app = new Hono();
 app.use(logger())
@@ -165,16 +165,15 @@ app.post('/chat/:sessionId', async (c) => {
           tools: tools
         });
         console.log('Received follow-up response');
-
+        messages.push( { "role": "assistant", "content": toolresp.content })
         return c.json({
-          response: toolresp.content,
           messages: messages
         });
       }
     }
+    messages.push( { "role": "assistant", "content": resp.content })
 
     return c.json({
-      response: resp.content,
       messages: messages
     });
 
