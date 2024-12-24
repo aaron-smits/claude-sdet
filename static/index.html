@@ -5,47 +5,141 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Claude Chat Client</title>
     <style>
+        :root {
+            --primary-color: #4b5563;
+            --bg-color: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
         body {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
         }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
         #chat-container {
-            height: 60vh;
+            height: 70vh;
             overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
+            background: white;
+            box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.05);
         }
+
         .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
+            margin: 16px 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-in;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .user-message {
-            background-color: #e3f2fd;
-            margin-left: 20%;
+            background-color: #f3f4f6;
+            color: var(--text-color);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
         }
+
         .assistant-message {
-            background-color: #f5f5f5;
-            margin-right: 20%;
+            background-color: #f9fafb;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
         }
+
+        .system-message {
+            background-color: #f9fafb;
+            margin: 16px auto;
+            width: fit-content;
+            font-size: 0.9rem;
+        }
+
         #input-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.05);
         }
+
         #message-input {
             flex-grow: 1;
-            padding: 10px;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
         }
+
+        #message-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgb(75 85 99 / 0.1);
+        }
+
         button {
-            padding: 10px 20px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 500;
             cursor: pointer;
+            transition: all 0.2s;
         }
-        .system-message {
-            background-color: #fff3e0;
-            margin: 10px 0;
+
+        button:hover {
+            background: #374151;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        img {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.05);
+        }
+
+        /* Custom scrollbar */
+        #chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-container::-webkit-scrollbar-track {
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+
+        #chat-container::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 4px;
+        }
+
+        #chat-container::-webkit-scrollbar-thumb:hover {
+            background: #d1d5db;
         }
     </style>
 </head>
@@ -55,7 +149,7 @@
     <div id="input-container">
         <input type="text" id="message-input" placeholder="Type your message...">
         <button onclick="sendMessage()">Send</button>
-        <button onclick="clearChat()">Clear Chat</button>
+        <button onclick="clearChat()" style="background: #9ca3af;">Clear Chat</button>
     </div>
 
     <script>
@@ -141,6 +235,8 @@
         }
 
         async function clearChat() {
+            if (!confirm('Are you sure you want to clear the chat?')) return;
+            
             try {
                 await fetch(`/chat/${sessionId}`, {
                     method: 'DELETE',

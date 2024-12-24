@@ -49,9 +49,6 @@ async function takeScreenshot(page: Page, name: string) {
   const buf = await page.screenshot();
   const screenshot = buf.toString("base64");
   screenshots.set(name, screenshot);
-  // server.notification({
-  //   method: "notifications/resources/list_changed",
-  // });
   return screenshot;
 }
 
@@ -68,11 +65,6 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
             type: "text",
             text: `Navigated to ${args.url}`,
           },
-          // {
-          //   type: "image",
-          //   data: screenshot,
-          //   mimeType: "image/png",
-          // }
         ],
         isError: false,
       };
@@ -100,11 +92,6 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
             type: "text",
             text: `${args.fullpage ? "Full Page": undefined }Screenshot '${args.name}' taken at`,
           },
-          // {
-          //   type: "image",
-          //   data: screenshot,
-          //   mimeType: "image/png",
-          // }
         ],
         isError: false,
       };
@@ -136,19 +123,12 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
       try {
         console.error(args)
         await page.locator(args.locator).click()
-        await page.waitForTimeout(2000)
-        // const screenshot = await takeScreenshot(page, `click_${Date.now()}`);
         return {
           content: [
             {
               type: "text",
               text: `Clicked ${args.locator}`,
             },
-            // {
-            //   type: "image",
-            //   data: screenshot,
-            //   mimeType: "image/png",
-            // }
           ],
           isError: false,
         };
@@ -165,19 +145,12 @@ export async function handleToolCall(name: string, args: any): Promise<any> {
     case "playwright_fill": {
       try {
         await page.locator(args.locator).fill(args.value);
-        await page.waitForTimeout(2000)
-        // const screenshot = await takeScreenshot(page, `click_${Date.now()}`);
         return {
           content: [
             {
               type: "text",
               text: `Filled ${args.locator} with: ${args.value}`,
             },
-            // {
-            //   type: "image",
-            //   data: screenshot,
-            //   mimeType: "image/png",
-            // }
           ],
           isError: false,
         };
